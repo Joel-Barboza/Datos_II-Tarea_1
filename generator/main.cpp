@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (fileSize.empty() || outputPath.empty()) {
-        std::cerr << "Parámetros inválidos.\n";
+        std::cerr << "Parámetros inválidos\n";
         return 1;
     }
 
