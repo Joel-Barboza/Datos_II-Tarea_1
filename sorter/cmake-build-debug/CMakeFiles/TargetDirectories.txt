@@ -1,0 +1,3 @@
+/home/joel/CLionProjects/Tarea-1/sorter/cmake-build-debug/CMakeFiles/sorter.dir
+/home/joel/CLionProjects/Tarea-1/sorter/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/joel/CLionProjects/Tarea-1/sorter/cmake-build-debug/CMakeFiles/rebuild_cache.dir

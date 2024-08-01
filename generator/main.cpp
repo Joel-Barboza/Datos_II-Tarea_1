@@ -2,6 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
+#include <random>
 
 const uint64_t SMALL_SIZE = 512ULL * 1024 * 1024; // 512 MB
 const uint64_t MEDIUM_SIZE = 1024ULL * 1024 * 1024; // 1 GB
@@ -9,8 +11,7 @@ const uint64_t LARGE_SIZE = 2ULL * 1024 * 1024 * 1024; // 2 GB
 
 class BinaryFile {
 public:
-
-    BinaryFile(const std::string& Size, const std::string& Path) {
+    BinaryFile(const std::string &Size, const std::string &Path) {
         uint64_t fileSize;
         if (Size == "SMALL") {
             fileSize = SMALL_SIZE;
@@ -31,39 +32,35 @@ public:
 
         writeNInt(fileSize / sizeof(int), outf);
         outf.close();
-
-        readBinaryFile();
     }
 
-    void readBinaryFile() {
-        /*std::ifstream inf(path, std::ifstream::binary);
-        if (!inf) {
-            std::cerr << "No se pudo abrir el archivo para leer.\n";
-            return;
-        }
-
-        int number;
-        std::cout << "Leído del archivo:\n";
-            std::cout << sizeof(number) << "\n";
-        int i{0};
-        for (int i = 0; i < 100; ++i) {
-            inf.seekg(i * sizeof(int), std::ifstream::beg);
-            inf.read(reinterpret_cast<char*>(&number), sizeof(number));
-            std::cout << "Número " << i << ": " << number << "\n";
-        }*/
-    }
 private:
-    static void writeNInt (uint64_t n, std::ofstream &outf) {
-        srand(static_cast<unsigned>(time(nullptr)));
-        std::cout << n << "\n";
+    static void writeNInt(uint64_t n, std::ofstream &outf) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(0, 99999);
+        //std::cout << n << "\n";
+
+        constexpr int bufferSize = 65536;
+        std::vector<int> buffer;
+        buffer.reserve(bufferSize);
+
         for (uint64_t i = 0; i < n; ++i) {
-            int random = rand() % 10000;
-            outf.write(reinterpret_cast<const char*>(&random), sizeof(random));
+            int random = dis(gen);
+            buffer.push_back(random);
+
+            // escribe en archivo cuano el buffer se llena
+            if (buffer.size() == bufferSize) {
+                outf.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * sizeof(int));
+                buffer.clear();
+            }
+        }
+        // Escribe lo que haya quedado en el buffer
+        if (!buffer.empty()) {
+            outf.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * sizeof(int));
         }
     }
 };
-
-
 
 
 int main(int argc, char *argv[]) {
@@ -79,16 +76,16 @@ int main(int argc, char *argv[]) {
     // Starts in one cuz first elem in argv is always the name of the program (e.g. ./generator)
     for (int i = 1; i < argc; ++i) {
         if (std::string(argv[i]) == "-size") {
-            if (std::string(argv[i+1]) == "SMALL" ||
-                std::string(argv[i+1]) == "MEDIUM" ||
-                std::string(argv[i+1]) == "LARGE") {
-                fileSize = argv[i+1];
+            if (std::string(argv[i + 1]) == "SMALL" ||
+                std::string(argv[i + 1]) == "MEDIUM" ||
+                std::string(argv[i + 1]) == "LARGE") {
+                fileSize = argv[i + 1];
             } else {
                 std::cout << "Tamaño no válido: -size <SMALL|MEDIUM|LARGE>\n";
                 return 1;
             }
         } else if (std::string(argv[i]) == "-output") {
-            outputPath = argv[i+1];
+            outputPath = argv[i + 1];
         }
     }
 
