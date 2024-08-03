@@ -32,3 +32,5 @@
 *.app
 
 *.bin
+*.csv
+*.txt

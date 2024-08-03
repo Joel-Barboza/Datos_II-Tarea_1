@@ -5,14 +5,15 @@
 #include <vector>
 #include <random>
 
-const uint64_t SMALL_SIZE = 512ULL * 1024 * 1024; // 512 MB
-const uint64_t MEDIUM_SIZE = 1024ULL * 1024 * 1024; // 1 GB
-const uint64_t LARGE_SIZE = 2ULL * 1024 * 1024 * 1024; // 2 GB
+/*const uint64_t SMALL_SIZE = 4ULL * 1024 * 1024; // 512 MB*/
+const unsigned long SMALL_SIZE = 4 * 1024; // 512 MB
+const unsigned long MEDIUM_SIZE = 1024UL * 1024 * 1024; // 1 GB
+const unsigned long LARGE_SIZE = 2UL * 1024 * 1024 * 1024; // 2 GB
 
 class BinaryFile {
 public:
     BinaryFile(const std::string &Size, const std::string &Path) {
-        uint64_t fileSize;
+        unsigned long fileSize;
         if (Size == "SMALL") {
             fileSize = SMALL_SIZE;
         } else if (Size == "MEDIUM") {
@@ -31,11 +32,12 @@ public:
         }
 
         writeNInt(fileSize / sizeof(int), outf);
+        //writeOrderedInt(fileSize / sizeof(int), outf);
         outf.close();
     }
 
 private:
-    static void writeNInt(uint64_t n, std::ofstream &outf) {
+    static void writeNInt(unsigned long n, std::ofstream &outf) {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dis(0, 99999);
@@ -45,9 +47,31 @@ private:
         std::vector<int> buffer;
         buffer.reserve(bufferSize);
 
-        for (uint64_t i = 0; i < n; ++i) {
+        for (unsigned long i = 0; i < n; ++i) {
             int random = dis(gen);
             buffer.push_back(random);
+
+            // escribe en archivo cuano el buffer se llena
+            if (buffer.size() == bufferSize) {
+                outf.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * sizeof(int));
+                buffer.clear();
+            }
+        }
+        // Escribe lo que haya quedado en el buffer
+        if (!buffer.empty()) {
+            outf.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * sizeof(int));
+        }
+    }
+
+    void writeOrderedInt(unsigned long n, std::ofstream &outf) {
+        //std::cout << n << "\n";
+
+        constexpr int bufferSize = 65536;
+        std::vector<int> buffer;
+        buffer.reserve(bufferSize);
+
+        for (unsigned long i = 0; i < n; ++i) {
+            buffer.push_back(i);
 
             // escribe en archivo cuano el buffer se llena
             if (buffer.size() == bufferSize) {
