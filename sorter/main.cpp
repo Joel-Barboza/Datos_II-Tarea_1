@@ -1,158 +1,14 @@
+#include <chrono>
 #include <iostream>
 #include <fstream>
+#include <list>
+#include <vector>
 
 // g++ -O3 -o sorter main.cpp
 // ./sorter -input ../output.bin -output output.bin -alg BS
 
 
 class PagedArray {
-
-    std::string filePath;
-    // indices de pagina inicializados en -1, para indicar que están vacios
-    int frame0[128]{};
-    int pageOnFrame0{-1};
-    int frame1[128]{};
-    int pageOnFrame1{-1};
-    int frame2[128]{};
-    int pageOnFrame2{-1};
-    int frame3[128]{};
-    int pageOnFrame3{-1};
-
-    int oldestFrameLoaded{-1};
-
-    int totalSize;
-
-
-    int defaultValue{-1}; // Valor por defecto
-
-
-    int &loadFromDisk(int pageNum, int index) {
-        if (pageOnFrame0 == -1) {
-            loadToSelectedFrame(pageNum*128, frame0);
-            oldestFrameLoaded = ++oldestFrameLoaded % 4;
-            pageOnFrame0 = pageNum;
-            return frame0[index % 128];
-
-        } else if (pageOnFrame1 == -1) {
-            loadToSelectedFrame(pageNum*128, frame1);
-            oldestFrameLoaded = ++oldestFrameLoaded % 4;
-            pageOnFrame1 = pageNum;
-            return frame1[index % 128];
-        } else if (pageOnFrame2 == -1) {
-            loadToSelectedFrame(pageNum*128, frame2);
-            oldestFrameLoaded = ++oldestFrameLoaded % 4;
-            pageOnFrame2 = pageNum;
-            return frame2[index % 128];
-        } else if (pageOnFrame3 == -1) {
-            loadToSelectedFrame(pageNum*128, frame3);
-            oldestFrameLoaded = ++oldestFrameLoaded % 4;
-            pageOnFrame3 = pageNum;
-            return frame3[index % 128];
-        } else {
-
-            std::cout << oldestFrameLoaded <<" "<< pageOnFrame3 <<" "<<frame3[0] << "\n";
-            std::cout << "before overwrite"<<"\n";
-            for (int i = 0; i < 128; ++i) {
-                std::cout << i << ": " << frame0[i] << ": " << frame1[i] << ": " << frame2[i] << ": " << frame3[i] << "\n";
-            }
-            return overwriteFrame(pageNum, index);
-        }
-
-
-    }
-
-    void loadToSelectedFrame(int startIndex, int frame[128]) {
-        std::ifstream file(filePath, std::ifstream::binary);
-        if (!file) {
-            std::cerr << "No se pudo abrir el archivo para leer.\n";
-            return;
-        }
-
-        // Move to the start index of the page
-        file.seekg(startIndex * sizeof(int), std::ifstream::beg);
-        if (!file) {
-            std::cerr << "Error al posicionar el archivo.\n";
-            return;
-        }
-
-        // Read 128 integers into the frame
-        file.read(reinterpret_cast<char *>(frame), 128 * sizeof(int));
-        if (!file) {
-            std::cerr << "Error al leer datos del archivo.\n";
-        }
-        std::cout << "load to from disk"<<"\n";
-        for (int i = 0; i < 128; ++i) {
-            std::cout << i << ": " << frame0[i] << ": " << frame1[i] << ": " << frame2[i] << ": " << frame3[i] << "\n";
-        }
-
-    }
-
-    void downloadFrame(int pageOnFrame, int frame[128]) {
-        std::ofstream file(filePath, std::ofstream::binary | std::ofstream::in | std::ofstream::out);
-        if (!file) {
-            std::cerr << "No se pudo abrir el archivo para escribir.\n";
-            return;
-        }
-
-        file.seekp(pageOnFrame * 128 * sizeof(int), std::ofstream::beg);
-        file.write(reinterpret_cast<const char *>(frame), 128 * sizeof(int));
-
-    }
-
-    int& overwriteFrame(int pageNum, int index) {
-        if (oldestFrameLoaded == 0) {
-            downloadFrame(pageOnFrame0, frame0);
-            std::cout << "load from overwrite"<<"\n";
-            loadToSelectedFrame(pageNum * 128, frame0);
-
-            pageOnFrame0 = pageNum;
-            oldestFrameLoaded = ++oldestFrameLoaded % 4;
-            std::cout << oldestFrameLoaded <<" "<< pageOnFrame0 <<" "<<frame0[0]<< "\n";
-            std::cout << "OVERWRITE"<<"\n";
-            for (int i = 0; i < 128; ++i) {
-                std::cout << i << ": " << frame0[i] << ": " << frame1[i] << ": " << frame2[i] << ": " << frame3[i] << "\n";
-            }
-            frame0[127] = 2;
-            std::cout << frame0[127];
-            std::cout << 127 << ": " << frame0[127] << ": " << frame1[127] << ": " << frame2[127] << ": " << frame3[127] << "\n";
-            //std::exit(0);
-            return frame0[index % 128];
-        } else if (oldestFrameLoaded == 1) {
-            downloadFrame(pageOnFrame1, frame1);
-            loadToSelectedFrame(pageNum * 128, frame1);
-            pageOnFrame1 = pageNum;
-            oldestFrameLoaded = ++oldestFrameLoaded % 4;
-            return frame1[index % 128];
-        } else if (oldestFrameLoaded == 2) {
-            downloadFrame(pageOnFrame2, frame2);
-            loadToSelectedFrame(pageNum * 128, frame2);
-            pageOnFrame2 = pageNum;
-            oldestFrameLoaded = ++oldestFrameLoaded % 4;
-            return frame2[index % 128];
-        } else if (oldestFrameLoaded == 3) {
-            downloadFrame(pageOnFrame3, frame3);
-            loadToSelectedFrame(pageNum * 128, frame3);
-            pageOnFrame3 = pageNum;
-            oldestFrameLoaded = ++oldestFrameLoaded % 4;
-            return frame3[index % 128];
-        }
-        std::cout << "No se pudo sobreescribir el frame" << std::endl;
-        //oldestFrameLoaded = ++oldestFrameLoaded % 4;
-    }
-
-    int calculateTotalSize() {
-        std::ifstream file(filePath, std::ifstream::binary | std::ifstream::ate);
-        if (!file) {
-            std::cerr << "No se pudo abrir el archivo para leer.\n";
-            return -1;
-        }
-
-        std::streamsize fileSize = file.tellg();
-        std::cout << "File size in bytes: " << fileSize << std::endl;
-        return static_cast<int>(fileSize / sizeof(int));
-    }
-
-
 public:
     PagedArray(std::string resultFilePath) {
         filePath = {resultFilePath};
@@ -172,22 +28,36 @@ public:
         int pageNum{index / 128};
 
         // if page loaded on frame, get element, else load it from disk
-        if (pageOnFrame0 == pageNum) {
-            return frame0[index % 128];
-        } else if (pageOnFrame1 == pageNum) {
-            return frame1[index % 128];
-        } else if (pageOnFrame2 == pageNum) {
-            return frame2[index % 128];
-        } else if (pageOnFrame3 == pageNum) {
-            return frame3[index % 128];
+        if (pageNumbers[0] == pageNum) {
+            pageHits++;
+            return frames[0][index % 128];
+        } else if (pageNumbers[1] == pageNum) {
+            pageHits++;
+            return frames[1][index % 128];
+        } else if (pageNumbers[2] == pageNum) {
+            pageHits++;
+            return frames[2][index % 128];
+        } else if (pageNumbers[3] == pageNum) {
+            pageHits++;
+            return frames[3][index % 128];
         } else {
+            pageFaults++;
             return loadFromDisk(pageNum, index);
         }
     }
-    int size() const {
+
+    int size() {
         return totalSize;
     }
-    void writeAsCsv (std::string& binFile, std::string csvFile) {
+
+    void downloadLastEditedFrames() {
+        for (int i = 0; i < 4; ++i) {
+            downloadFrame(pageNumbers[i], frames[i]);
+        }
+    }
+
+    void writeAsCsv(std::string &binFile, std::string csvFile) {
+        std::cout << "Copiando a csv.";
         std::ifstream src(binFile, std::ifstream::binary);
         if (!src) {
             std::cerr << "No se pudo abrir el archivo para leer.\n";
@@ -201,7 +71,7 @@ public:
         }
 
         int number;
-        while (src.read(reinterpret_cast<char*>(&number), sizeof(int))) {
+        while (src.read(reinterpret_cast<char *>(&number), sizeof(int))) {
             dst << number << ",";
         }
 
@@ -209,12 +79,106 @@ public:
         dst.seekp(-1, std::ios_base::end);
         dst << '\n';
 
-        std::cout << "Archivo convertido exitosamente a CSV.\n";
+        std::cout << "Archivo copiado exitosamente a CSV.\n";
     }
 
+    int getPageFaults() {
+        return pageFaults;
+    }
 
+    int getPageHits() {
+        return pageHits;
+    }
+
+private:
+    std::string filePath;
+    // indices de pagina inicializados en -1, para indicar que están vacios
+    const std::vector<int *> frames = {new int[128], new int[128], new int[128], new int[128]};
+    std::vector<int> pageNumbers = {-1, -1, -1, -1};
+
+    // LRU = Least Recently Used
+    std::list<int> LRUOrder;
+
+    int totalSize;
+
+
+    int defaultValue{-1}; // Valor por defecto
+
+    int pageFaults = 0;
+    int pageHits = 0;
+
+
+    int &loadFromDisk(int pageNum, int index) {
+        if (pageNumbers[0] == -1) {
+            loadToSelectedFrame(pageNum, 0);
+            return frames[0][index % 128];
+        } else if (pageNumbers[1] == -1) {
+            loadToSelectedFrame(pageNum, 1);
+            return frames[1][index % 128];
+        } else if (pageNumbers[2] == -1) {
+            loadToSelectedFrame(pageNum, 2);
+            return frames[2][index % 128];
+        } else if (pageNumbers[3] == -1) {
+            loadToSelectedFrame(pageNum, 3);
+            return frames[3][index % 128];
+        } else {
+            return overwriteFrame(pageNum, index);
+        }
+    }
+
+    void loadToSelectedFrame(int pageNum, int frameIndex) {
+        std::ifstream file(filePath, std::ifstream::binary);
+        if (!file) {
+            std::cerr << "No se pudo abrir el archivo para leer.\n";
+            return;
+        }
+
+        // Move to the start index of the page
+        file.seekg(pageNum * 128 * sizeof(int), std::ifstream::beg);
+        if (!file) {
+            std::cerr << "Error al posicionar el archivo.\n";
+            return;
+        }
+
+        // Read 128 integers into the frame
+        file.read(reinterpret_cast<char *>(frames[frameIndex]), 128 * sizeof(int));
+        if (!file) {
+            std::cerr << "Error al leer datos del archivo.\n";
+        }
+        LRUOrder.push_front(frameIndex);
+        pageNumbers[frameIndex] = pageNum;
+    }
+
+    void downloadFrame(int pageOnFrame, int frame[128]) {
+        std::ofstream file(filePath, std::ofstream::binary | std::ofstream::in | std::ofstream::out);
+        if (!file) {
+            std::cerr << "No se pudo abrir el archivo para escribir.\n";
+            return;
+        }
+
+        file.seekp(pageOnFrame * 128 * sizeof(int), std::ofstream::beg);
+        file.write(reinterpret_cast<const char *>(frame), 128 * sizeof(int));
+    }
+
+    int &overwriteFrame(int pageNum, int indexSearched) {
+        int LRUFrameIndex = LRUOrder.back();
+        downloadFrame(pageNumbers[LRUFrameIndex], frames[LRUFrameIndex]);
+        loadToSelectedFrame(pageNum, LRUFrameIndex);
+        return frames[LRUFrameIndex][indexSearched % 128];
+    }
+
+    int calculateTotalSize() {
+        std::ifstream file(filePath, std::ifstream::binary | std::ifstream::ate);
+        if (!file) {
+            std::cerr << "No se pudo abrir el archivo para leer.\n";
+            return -1;
+        }
+
+        std::streamsize fileSize = file.tellg();
+        std::cout << "File size in bytes: " << fileSize << std::endl;
+        return static_cast<int>(fileSize / sizeof(int));
+    }
 };
-
 
 
 void swap(int &a, int &b) {
@@ -222,23 +186,21 @@ void swap(int &a, int &b) {
     a = b;
     b = temp;
 }
-void bubbleSort(PagedArray &arr, int n)
-{
+
+void bubbleSort(PagedArray &arr, int n) {
     int i, j;
     for (i = 0; i < n - 1; i++)
 
         // Last i elements are already
-            // in place
-                for (j = 0; j < n - i - 1; j++)
-                    if (arr[j] > arr[j + 1]) {
-                        //std::cout << arr[j] << " " << arr[j+1] << "\n";
-                        swap(arr[j], arr[j + 1]);
-                    }
+        // in place
+        for (j = 0; j < n - i - 1; j++)
+            if (arr[j] > arr[j + 1]) {
+                //std::cout << arr[j] << " " << arr[j+1] << "\n";
+                swap(arr[j], arr[j + 1]);
+            }
 }
 
-int partition(PagedArray &arr, int start, int end)
-{
-
+int partition(PagedArray &arr, int start, int end) {
     int pivot = arr[start];
 
     int count = 0;
@@ -255,7 +217,6 @@ int partition(PagedArray &arr, int start, int end)
     int i = start, j = end;
 
     while (i < pivotIndex && j > pivotIndex) {
-
         while (arr[i] <= pivot) {
             i++;
         }
@@ -272,9 +233,7 @@ int partition(PagedArray &arr, int start, int end)
     return pivotIndex;
 }
 
-void quickSort(PagedArray &arr, int start, int end)
-{
-
+void quickSort(PagedArray &arr, int start, int end) {
     // base case
     if (start >= end)
         return;
@@ -289,9 +248,28 @@ void quickSort(PagedArray &arr, int start, int end)
     quickSort(arr, p + 1, end);
 }
 
+void copyFile(const std::string &srcPath, const std::string &dstPath) {
+    std::ifstream src(srcPath, std::ifstream::binary); // Open file in binary mode
+    if (!src) {
+        std::cerr << "No se pudo abrir el archivo fuente para leer.\n";
+        return;
+    }
+
+    std::ofstream dst(dstPath, std::ofstream::binary); // Open file in binary mode
+    if (!dst) {
+        std::cerr << "No se pudo abrir el archivo de destino para escribir.\n";
+        return;
+    }
+
+    dst << src.rdbuf(); // Copy contents of src to dst
+
+    std::cout << "Archivo copiado exitosamente de " << srcPath << " a " << dstPath << ".\n";
+}
 
 
 int main(int argc, char *argv[]) {
+    auto initialTime = std::chrono::high_resolution_clock::now();
+
     if (argc < 7) {
         std::cout << "Faltan argumentos:\n";
         std::cout << "./sorter –input <INPUT FILE PATH> -output <OUTPUT FILE PATH> -alg <ALGORITMO>\n";
@@ -309,14 +287,17 @@ int main(int argc, char *argv[]) {
         } else if (std::string(argv[i]) == "-output") {
             outputPath = argv[i + 1];
         } else if (std::string(argv[i]) == "-alg") {
-            if (std::string(argv[i + 1]) == "QS" ||
-                std::string(argv[i + 1]) == "IS" ||
-                std::string(argv[i + 1]) == "BS") {
-                algorithm = argv[i + 1];
+            if (std::string(argv[i + 1]) == "QS") {
+                algorithm = "Quick Sort";
+            } else if (std::string(argv[i + 1]) == "IS") {
+                algorithm = "Insertion Sort";
+            } else if (std::string(argv[i + 1]) == "BS") {
+                algorithm = "Bubble Sort";
             } else {
                 std::cout << "Tamaño no válido: -size <QS|IS|BS>\n";
                 return 1;
             }
+
         }
     }
 
@@ -326,41 +307,25 @@ int main(int argc, char *argv[]) {
     }
 
 
-    std::ifstream src(inputPath, std::ifstream::binary);
-    if (!src) {
-        std::cerr << "No se pudo abrir el archivo para leer.\n";
-        return 1;
-    }
-    std::ofstream dst(outputPath, std::ofstream::binary);
-    if (!dst) {
-        std::cerr << "No se pudo abrir el archivo para escribir.\n";
-        return 1;
-    }
-    dst << src.rdbuf();
+    copyFile(inputPath, outputPath);
 
     PagedArray arr{outputPath};
     int N = arr.size();
-    std::cout << N << "\n";
-    // Debug: Print the first 10 values before sorting
-    std::cout << "Array before sorting:\n";
-    for (int i = 0; i < 10; ++i) {
-        std::cout << arr[i] << " ";
-    }
-    std::cout << "\n";
-    //bubbleSort(arr, N);
-    quickSort(arr, 0, N-1);
+    quickSort(arr, 0, N - 1);
+    arr.downloadLastEditedFrames();
     arr.writeAsCsv(outputPath, "output.txt");
-    /*int j;
-    for (j = 0; j < N; j++)
-        std::cout << arr[j] << " ";
-    std::cout << std::endl;*/
-    /*std::cout << arr[3] << "\n";*/
-    // Debug: Print the first 10 values after sorting
-    std::cout << "Array after sorting:\n";
-    for (int i = 0; i < 10; ++i) {
-        std::cout << arr[i] << " ";
-    }
-    std::cout << "\n";
+
+
+    auto finishTime = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> miliseconds = initialTime - finishTime;
+
+    int pageFaults = arr.getPageFaults();
+    int pageHits = arr.getPageHits();
+
+    //std::cout << "Tiempo durado: " << miliseconds << "ms\n";
+    std::cout << "Algoritmo utilizado: " << algorithm << "\n";
+    std::cout << "Page faults: " << pageFaults << "\n";
+    std::cout << "Page hits: " << pageHits << "\n";
 
     return 0;
 }

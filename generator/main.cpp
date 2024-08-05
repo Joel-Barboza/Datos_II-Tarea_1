@@ -5,7 +5,7 @@
 #include <vector>
 #include <random>
 
-/*const uint64_t SMALL_SIZE = 4ULL * 1024 * 1024; // 512 MB*/
+//const unsigned long SMALL_SIZE = 1UL * 1024 * 1024; // 512 MB
 const unsigned long SMALL_SIZE = 4 * 1024; // 512 MB
 const unsigned long MEDIUM_SIZE = 1024UL * 1024 * 1024; // 1 GB
 const unsigned long LARGE_SIZE = 2UL * 1024 * 1024 * 1024; // 2 GB
@@ -70,7 +70,11 @@ private:
         std::vector<int> buffer;
         buffer.reserve(bufferSize);
 
-        for (unsigned long i = 0; i < n; ++i) {
+
+        for (long i = n - 1; i >= 0; --i) {
+
+
+        //for (unsigned long i = 0; i < n; ++i) {
             buffer.push_back(i);
 
             // escribe en archivo cuano el buffer se llena
