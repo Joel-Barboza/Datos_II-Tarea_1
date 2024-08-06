@@ -5,8 +5,10 @@
 #include <vector>
 #include <random>
 
+//g++ -O3 -march=native -flto -funroll-loops -o generator main.cpp
+//./generator -size SMALL -output ../output.bin
 //const unsigned long SMALL_SIZE = 1UL * 1024 * 1024; // 512 MB
-const unsigned long SMALL_SIZE = 4 * 1024; // 512 MB
+const unsigned long SMALL_SIZE = 128*1024 * 1024; // 512 MB
 const unsigned long MEDIUM_SIZE = 1024UL * 1024 * 1024; // 1 GB
 const unsigned long LARGE_SIZE = 2UL * 1024 * 1024 * 1024; // 2 GB
 

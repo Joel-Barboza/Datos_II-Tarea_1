@@ -4,7 +4,7 @@
 #include <list>
 #include <vector>
 
-// g++ -O3 -o sorter main.cpp
+// g++ -O3 -march=native -flto -funroll-loops -o sorter main.cpp
 // ./sorter -input ../output.bin -output output.bin -alg BS
 
 
@@ -82,11 +82,11 @@ public:
         std::cout << "Archivo copiado exitosamente a CSV.\n";
     }
 
-    int getPageFaults() {
+    unsigned long long getPageFaults() {
         return pageFaults;
     }
 
-    int getPageHits() {
+    unsigned long long getPageHits() {
         return pageHits;
     }
 
@@ -104,8 +104,8 @@ private:
 
     int defaultValue{-1}; // Valor por defecto
 
-    int pageFaults = 0;
-    int pageHits = 0;
+    unsigned long long pageFaults = 0;
+    unsigned long long pageHits = 0;
 
 
     int &loadFromDisk(int pageNum, int index) {
@@ -163,6 +163,7 @@ private:
     int &overwriteFrame(int pageNum, int indexSearched) {
         int LRUFrameIndex = LRUOrder.back();
         downloadFrame(pageNumbers[LRUFrameIndex], frames[LRUFrameIndex]);
+        LRUOrder.pop_back();
         loadToSelectedFrame(pageNum, LRUFrameIndex);
         return frames[LRUFrameIndex][indexSearched % 128];
     }
@@ -319,8 +320,8 @@ int main(int argc, char *argv[]) {
     auto finishTime = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> miliseconds = initialTime - finishTime;
 
-    int pageFaults = arr.getPageFaults();
-    int pageHits = arr.getPageHits();
+    unsigned long long pageFaults = arr.getPageFaults();
+    unsigned long long pageHits = arr.getPageHits();
 
     //std::cout << "Tiempo durado: " << miliseconds << "ms\n";
     std::cout << "Algoritmo utilizado: " << algorithm << "\n";
