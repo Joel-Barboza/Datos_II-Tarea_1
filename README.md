@@ -2,11 +2,11 @@
 * Se usó g++ para la compilación de ambas partes de la tarea.
 * Se usaron flags de optimización para la compilación.
 #### Información de las flags usadas: 
-* [GCC, Options That Control Optimization]("https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html")
-* [-O3]("https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#index-O3")
-* [-march=native]("https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html#index-march-16")
-* [-flto]("https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#index-flto")
-* [-funroll-loops]("https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#index-funroll-loops")
+* [GCC, Options That Control Optimization](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)
+* [-O3](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#index-O3)
+* [-march=native](https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html#index-march-16)
+* [-flto](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#index-flto)
+* [-funroll-loops](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#index-funroll-loops)
 
 # Uso de generator
 
