@@ -3,9 +3,14 @@
 #include <fstream>
 #include <list>
 #include <vector>
+#include <unordered_map>
 
 // g++ -O3 -march=native -flto -funroll-loops -o sorter main.cpp
 // ./sorter -input ../output.bin -output output.bin -alg BS
+// g++ -pg -o sorter main.cpp
+// run normally
+// gprof sorter gmon.out > analysis.txt
+
 
 
 class PagedArray {
@@ -28,18 +33,11 @@ public:
         int pageNum{index / 128};
 
         // if page loaded on frame, get element, else load it from disk
-        if (pageNumbers[0] == pageNum) {
+        auto it = pageMap.find(pageNum);
+        if (it != pageMap.end()) {
+            int frameIndex = it->second;
             pageHits++;
-            return frames[0][index % 128];
-        } else if (pageNumbers[1] == pageNum) {
-            pageHits++;
-            return frames[1][index % 128];
-        } else if (pageNumbers[2] == pageNum) {
-            pageHits++;
-            return frames[2][index % 128];
-        } else if (pageNumbers[3] == pageNum) {
-            pageHits++;
-            return frames[3][index % 128];
+            return frames[frameIndex][index % 128];
         } else {
             pageFaults++;
             return loadFromDisk(pageNum, index);
@@ -95,9 +93,10 @@ private:
     // indices de pagina inicializados en -1, para indicar que están vacios
     const std::vector<int *> frames = {new int[128], new int[128], new int[128], new int[128]};
     std::vector<int> pageNumbers = {-1, -1, -1, -1};
-
     // LRU = Least Recently Used
     std::list<int> LRUOrder;
+    std::unordered_map<int, int> pageMap;
+
 
     int totalSize;
 
@@ -109,21 +108,15 @@ private:
 
 
     int &loadFromDisk(int pageNum, int index) {
-        if (pageNumbers[0] == -1) {
-            loadToSelectedFrame(pageNum, 0);
-            return frames[0][index % 128];
-        } else if (pageNumbers[1] == -1) {
-            loadToSelectedFrame(pageNum, 1);
-            return frames[1][index % 128];
-        } else if (pageNumbers[2] == -1) {
-            loadToSelectedFrame(pageNum, 2);
-            return frames[2][index % 128];
-        } else if (pageNumbers[3] == -1) {
-            loadToSelectedFrame(pageNum, 3);
-            return frames[3][index % 128];
-        } else {
-            return overwriteFrame(pageNum, index);
+        if (pageMap.size() < 4) {
+            for (int i = 0; i < 4; ++i) {
+                if (pageNumbers[i] == -1) {
+                    loadToSelectedFrame(pageNum, i);
+                    return frames[i][index % 128];
+                }
+            }
         }
+        return overwriteFrame(pageNum, index);
     }
 
     void loadToSelectedFrame(int pageNum, int frameIndex) {
@@ -147,6 +140,7 @@ private:
         }
         LRUOrder.push_front(frameIndex);
         pageNumbers[frameIndex] = pageNum;
+        pageMap[pageNum] = frameIndex;
     }
 
     void downloadFrame(int pageOnFrame, int frame[128]) {
@@ -163,6 +157,7 @@ private:
     int &overwriteFrame(int pageNum, int indexSearched) {
         int LRUFrameIndex = LRUOrder.back();
         downloadFrame(pageNumbers[LRUFrameIndex], frames[LRUFrameIndex]);
+        pageMap.erase(pageNumbers[LRUFrameIndex]);
         LRUOrder.pop_back();
         loadToSelectedFrame(pageNum, LRUFrameIndex);
         return frames[LRUFrameIndex][indexSearched % 128];
@@ -330,22 +325,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
-
-/*void readBinaryFile() {
-    std::ifstream inf(path, std::ifstream::binary);
-    if (!inf) {
-        std::cerr << "No se pudo abrir el archivo para leer.\n";
-        return;
-    }
-
-    int number;
-    std::cout << "Leído del archivo:\n";
-        std::cout << sizeof(number) << "\n";
-    int i{0};
-    for (int i = 0; i < 100; ++i) {
-        inf.seekg(i * sizeof(int), std::ifstream::beg);
-        inf.read(reinterpret_cast<char*>(&number), sizeof(number));
-        std::cout << "Número " << i << ": " << number << "\n";
-    }
-}*/
