@@ -12,7 +12,6 @@
 // gprof sorter gmon.out > analysis.txt
 
 
-
 class PagedArray {
 public:
     PagedArray(std::string resultFilePath) {
@@ -244,6 +243,20 @@ void quickSort(PagedArray &arr, int start, int end) {
     quickSort(arr, p + 1, end);
 }
 
+void insertionSort(PagedArray &arr, int n) {
+    int i, key, j;
+    for (i = 1; i < n; i++) {
+        key = arr[i];
+        j = i - 1;
+
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}
+
 void copyFile(const std::string &srcPath, const std::string &dstPath) {
     std::ifstream src(srcPath, std::ifstream::binary); // Open file in binary mode
     if (!src) {
@@ -293,7 +306,6 @@ int main(int argc, char *argv[]) {
                 std::cout << "Tamaño no válido: -size <QS|IS|BS>\n";
                 return 1;
             }
-
         }
     }
 
@@ -307,7 +319,13 @@ int main(int argc, char *argv[]) {
 
     PagedArray arr{outputPath};
     int N = arr.size();
-    quickSort(arr, 0, N - 1);
+    if (algorithm == "Quick Sort") {
+        quickSort(arr, 0, N - 1);
+    } else if (algorithm == "Insertion Sort") {
+        insertionSort(arr, N);
+    } else if (algorithm == "Bubble Sort") {
+        bubbleSort(arr, N);
+    }
     arr.downloadLastEditedFrames();
     arr.writeAsCsv(outputPath, "output.txt");
 
