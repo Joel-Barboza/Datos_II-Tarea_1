@@ -31,6 +31,7 @@ Donde **\<SIZE>** puede tomar 3 valores principales:
 * SMALL: genera un archivo de 512 MB
 * MEDIUM: genera un archivo de 1 GB
 * LARGE: genera un archivo 2 GB
+
 Ademas, de el valor TEST, el cual genera un archivo de 64KB, el cual es util para probar la funcionalidad de sorter, ya que archivos grandes toma un tiempo excesivo con algunos algoritmos
 
 Mientras que **\<OUTPUT FILE PATH>** recibe la ruta en la que se creará el archivo resultante.
