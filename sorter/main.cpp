@@ -54,10 +54,10 @@ public:
         for (int i = 0; i < 4; ++i) {
             downloadFrame(pageNumbers[i], frames[i]);
         }
+        std::cout << "---Ordenamiento Terminado" << "\n";
     }
 
     void writeAsCsv(std::string &binFile, std::string csvFile) {
-        std::cout << "Copiando a csv.";
         std::ifstream src(binFile, std::ifstream::binary);
         if (!src) {
             std::cerr << "No se pudo abrir el archivo para leer.\n";
@@ -79,7 +79,6 @@ public:
         dst.seekp(-1, std::ios_base::end);
         dst << '\n';
 
-        std::cout << "Archivo copiado exitosamente a CSV.\n";
     }
 
     unsigned long long getPageFaults() {
@@ -176,7 +175,6 @@ private:
         }
 
         std::streamsize fileSize = file.tellg();
-        std::cout << "File size in bytes: " << fileSize << std::endl;
         return static_cast<int>(fileSize / sizeof(int));
     }
 };
@@ -196,7 +194,6 @@ void bubbleSort(PagedArray &arr, int n) {
         // in place
         for (j = 0; j < n - i - 1; j++)
             if (arr[j] > arr[j + 1]) {
-                //std::cout << arr[j] << " " << arr[j+1] << "\n";
                 swap(arr[j], arr[j + 1]);
             }
 }
@@ -247,6 +244,20 @@ void quickSort(PagedArray &arr, int start, int end) {
 
     // Sorting the right part
     quickSort(arr, p + 1, end);
+}
+
+void insertionSort(PagedArray &arr, int n) {
+    int i, key, j;
+    for (i = 1; i < n; i++) {
+        key = arr[i];
+        j = i - 1;
+
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
 }
 
 void copyFile(const std::string &srcPath, const std::string &dstPath) {
@@ -312,40 +323,35 @@ int main(int argc, char *argv[]) {
 
     PagedArray arr{outputPath};
     int N = arr.size();
-    quickSort(arr, 0, N - 1);
+    std::cout << "Iniciando ordenamiento.\n";
+    if (algorithm == "Quick Sort") {
+        quickSort(arr, 0, N - 1);
+    } else if (algorithm == "Insertion Sort") {
+        insertionSort(arr, N);
+    } else if (algorithm == "Bubble Sort") {
+        bubbleSort(arr, N);
+    }
     arr.downloadLastEditedFrames();
+    std::cout << "Copiando " << outputPath << " a un archivo de texto en formato legible...\n";
     arr.writeAsCsv(outputPath, "output.txt");
+    std::cout << "---Archivo de texto listo\n";
 
-
-    auto finishTime = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> miliseconds = initialTime - finishTime;
 
     unsigned long long pageFaults = arr.getPageFaults();
     unsigned long long pageHits = arr.getPageHits();
 
-    //std::cout << "Tiempo durado: " << miliseconds << "ms\n";
-    std::cout << "Algoritmo utilizado: " << algorithm << "\n";
-    std::cout << "Page faults: " << pageFaults << "\n";
-    std::cout << "Page hits: " << pageHits << "\n";
+    auto finishTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(finishTime - initialTime);
+    std::cout << "+----------------------+------------------------------\n";
+    std::cout << "|Tiempo durado:        |" << duration.count() << "ms\n";
+    std::cout << "+----------------------+------------------------------\n";
+    std::cout << "|Algoritmo utilizado:  |" << algorithm << "\n";
+    std::cout << "+----------------------+------------------------------\n";
+    std::cout << "|Page faults:          |" << pageFaults << "\n";
+    std::cout << "+----------------------+------------------------------\n";
+    std::cout << "|Page hits:            |" << pageHits << "\n";
+    std::cout << "+----------------------+------------------------------\n";
 
     return 0;
 }
 
-
-/*void readBinaryFile() {
-    std::ifstream inf(path, std::ifstream::binary);
-    if (!inf) {
-        std::cerr << "No se pudo abrir el archivo para leer.\n";
-        return;
-    }
-
-    int number;
-    std::cout << "Leído del archivo:\n";
-        std::cout << sizeof(number) << "\n";
-    int i{0};
-    for (int i = 0; i < 100; ++i) {
-        inf.seekg(i * sizeof(int), std::ifstream::beg);
-        inf.read(reinterpret_cast<char*>(&number), sizeof(number));
-        std::cout << "Número " << i << ": " << number << "\n";
-    }
-}*/

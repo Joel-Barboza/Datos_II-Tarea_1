@@ -7,8 +7,9 @@
 
 //g++ -O3 -march=native -flto -funroll-loops -o generator main.cpp
 //./generator -size SMALL -output ../output.bin
-//const unsigned long SMALL_SIZE = 1UL * 1024 * 1024; // 512 MB
-const unsigned long SMALL_SIZE = 128*1024 * 1024; // 512 MB
+
+const unsigned long TEST_SIZE = 64 *1024; // 64KB
+const unsigned long SMALL_SIZE = 512UL * 1024 * 1024; // 512 MB
 const unsigned long MEDIUM_SIZE = 1024UL * 1024 * 1024; // 1 GB
 const unsigned long LARGE_SIZE = 2UL * 1024 * 1024 * 1024; // 2 GB
 
@@ -22,6 +23,8 @@ public:
             fileSize = MEDIUM_SIZE;
         } else if (Size == "LARGE") {
             fileSize = LARGE_SIZE;
+        } else if (Size == "TEST") {
+            fileSize = TEST_SIZE;
         } else {
             std::cerr << "Tamaño no válido.\n";
             return;
@@ -55,13 +58,13 @@ private:
 
             // escribe en archivo cuano el buffer se llena
             if (buffer.size() == bufferSize) {
-                outf.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * sizeof(int));
+                outf.write(reinterpret_cast<const char *>(buffer.data()), buffer.size() * sizeof(int));
                 buffer.clear();
             }
         }
         // Escribe lo que haya quedado en el buffer
         if (!buffer.empty()) {
-            outf.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * sizeof(int));
+            outf.write(reinterpret_cast<const char *>(buffer.data()), buffer.size() * sizeof(int));
         }
     }
 
@@ -74,20 +77,18 @@ private:
 
 
         for (long i = n - 1; i >= 0; --i) {
-
-
-        //for (unsigned long i = 0; i < n; ++i) {
+            //for (unsigned long i = 0; i < n; ++i) {
             buffer.push_back(i);
 
             // escribe en archivo cuano el buffer se llena
             if (buffer.size() == bufferSize) {
-                outf.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * sizeof(int));
+                outf.write(reinterpret_cast<const char *>(buffer.data()), buffer.size() * sizeof(int));
                 buffer.clear();
             }
         }
         // Escribe lo que haya quedado en el buffer
         if (!buffer.empty()) {
-            outf.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * sizeof(int));
+            outf.write(reinterpret_cast<const char *>(buffer.data()), buffer.size() * sizeof(int));
         }
     }
 };
@@ -96,7 +97,7 @@ private:
 int main(int argc, char *argv[]) {
     if (argc < 5) {
         std::cout << "Faltan argumentos:\n";
-        std::cout << "./generator -size <SMALL|MEDIUM|LARGE> -output <OUTPUT FILE PATH>\n";
+        std::cout << "./generator -size <SMALL|MEDIUM|LARGE|TEST> -output <OUTPUT FILE PATH>\n";
         return 1;
     }
 
@@ -108,10 +109,11 @@ int main(int argc, char *argv[]) {
         if (std::string(argv[i]) == "-size") {
             if (std::string(argv[i + 1]) == "SMALL" ||
                 std::string(argv[i + 1]) == "MEDIUM" ||
-                std::string(argv[i + 1]) == "LARGE") {
+                std::string(argv[i + 1]) == "LARGE" ||
+                std::string(argv[i + 1]) == "TEST") {
                 fileSize = argv[i + 1];
             } else {
-                std::cout << "Tamaño no válido: -size <SMALL|MEDIUM|LARGE>\n";
+                std::cout << "Tamaño no válido: -size <SMALL|MEDIUM|LARGE|TEST>\n";
                 return 1;
             }
         } else if (std::string(argv[i]) == "-output") {
@@ -125,5 +127,6 @@ int main(int argc, char *argv[]) {
     }
 
     BinaryFile file(fileSize, outputPath);
+    std::cout << "Archivo creado, " << fileSize << std::endl;
     return 0;
 }
