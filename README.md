@@ -4,7 +4,7 @@
 * El comando generator crea los archivos según tamaño de manera correcta.
 * Se agregó un valor de SIZE adicional a generator llamado **TEST**, ya que sorter dura demasiado con los archivos más grandes. Para un archivo de 128KB, Bubble Sort tarda 90 segundos, Insertion sort aproximadamente 40 segundos y Quick Sort ronda los 200 milisegundos. Quick Sort fue probado con archivos de 16MB, tardando un tiempo aproximado de 30 segundos.
 * Inicialmente se usó **FIFO** (First In, First Out) para el remplazo de páginas cargadas, pero los pages faults fueron muy altos, por lo que luego se implemento **LRU** (Least Recently Used), que redujo los page faults en gran manera.
-* LRU fue implementado de una manera muy simple, por lo que se averiguó sobre optimizaciones y se encontró que lo mas usado era la implementación por medio de un unorderen map para consultas de páginas más rapidas, pero al implementarlo con PagedArray el tiempo más bien aumentó.
+* LRU fue implementado de una manera muy simple, por lo que se averiguó sobre optimizaciones y se encontró que lo mas usado era la implementación por medio de un unorderen map (implementación en la rama [sorter/unordered_map](https://github.com/Joel-Barboza/Datos_II-Tarea_1/tree/sorter/unordered_map)) para consultas de páginas más rapidas, pero al implementarlo con PagedArray el tiempo más bien aumentó.
 
 #### Información de las flags usadas: 
 * [GCC, Options That Control Optimization](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)
